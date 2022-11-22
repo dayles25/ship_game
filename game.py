@@ -5,6 +5,7 @@ import sys
 from ship import Ship
 from sunk_ship import SunkShip
 import math
+from wall import Wall
 
 # init pygame
 pygame.init()
@@ -18,8 +19,15 @@ WINDOW_HEIGHT = 8 * TILE_SIZE
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
 
-ship = Ship(screen)
+ship = Ship()
 sunk_ship = SunkShip(screen)
+wall_1 = Wall((300,300))
+
+wall_group = pygame.sprite.Group()
+wall_group.add(wall_1)
+
+
+
 bg = draw_background((WINDOW_WIDTH, WINDOW_HEIGHT))
 font = pygame.font.SysFont(None, 24)
 score = 1024
@@ -46,8 +54,9 @@ while True:
     pygame.display.set_caption(f"Ships Ahoy {clock.get_fps():.0f}")
     screen.blit(bg, bg.get_rect())
     sunk_ship.draw()
-    ship.update()
-    ship.draw()
+    ship.update(wall_group)
+    ship.draw(screen)
+    pygame.sprite.Group.draw(wall_group, screen)
 
     #add score
     #img = font.render(f"Score: {score}", True, (255, 0, 0))
