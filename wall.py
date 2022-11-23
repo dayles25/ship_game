@@ -6,7 +6,7 @@ class Wall(pygame.sprite.Sprite):
 
         self.image = pygame.image.load('images/Tiles/rpgTile029.png')
         self.rect = self.image.get_rect()
-        self.rect.center = pos
+        self.rect.bottomright = pos
 
     def update(self):
         pass
