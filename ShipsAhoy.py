@@ -24,10 +24,10 @@ class ShipsAhoy:
 
         self.water = pygame.image.load("images/Tiles/rpgTile029.png")
 
-        rock_1 = pygame.image.load('images/Tiles/tile_65.png')
-        rock_2 = pygame.image.load('images/Tiles/tile_66.png')
-        rock_3 = pygame.image.load('images/Tiles/tile_67.png')
-        self.rocks = [rock_1, rock_2, rock_3]
+        self.rock_1 = pygame.image.load('images/Tiles/tile_65.png')
+        self.rock_2 = pygame.image.load('images/Tiles/tile_66.png')
+        self.rock_3 = pygame.image.load('images/Tiles/tile_67.png')
+    #    self.rocks = [rock_1, rock_2, rock_3]
 
         # self.stats = GameStats(self)
 
@@ -46,6 +46,7 @@ class ShipsAhoy:
               #  self._update_bullets()
               #  self._update_aliens()
             self._update_screen()
+
 
     def _check_events(self):
         '''respond to keypress and mouse events'''
@@ -155,12 +156,15 @@ class ShipsAhoy:
             self.screen.blit(self.water, (x, y))
 
     def create_obstacles(self, amount):
-        random_x = random.randint(200, 1000)
-        random_y = random.randint(50, 590)
-        random_rock = random.choice(self.rocks)
-        for x in range(amount):
-            self.screen.blit(random_rock, (random_x, random_y))
-        
+     #   random_x = random.randint(200, 1000)
+     #   random_y = random.randint(50, 590)
+     #   random_rock = random.choice(self.rocks)
+     #   for x in range(amount):
+        self.screen.blit(self.rock_1, (200, 300))
+        self.screen.blit(self.rock_2, (400, 100))
+        self.screen.blit(self.rock_3, (700, 150))
+        self.screen.blit(self.rock_1, (1000, 300))
+        self.screen.blit(self.rock_2, (600, 500))
 
 
     def _update_screen(self):
