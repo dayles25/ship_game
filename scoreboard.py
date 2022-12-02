@@ -75,4 +75,4 @@ class Scoreboard:
             ship2 = Ship2(self.sa_game)
             ship2.rect.x = 10 + ship_number * ship2.rect.width
             ship2.rect.y = 50
-            self.ships.add(ship2)
+            self.ships2.add(ship2)

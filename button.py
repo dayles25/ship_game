@@ -6,10 +6,10 @@ class Button:
         self.screen = ai_game.screen
         self.screen_rect = self.screen.get_rect()
 
-        self.width, self.height = 200, 50
+        self.width, self.height = 200, 70
         self.button_color = (77, 55, 9)
         self.text_color = (15, 217, 200)
-        self.font = pygame.font.SysFont(None, 48)
+        self.font = pygame.font.SysFont('Gigi', 48)
 
         self.rect = pygame.Rect(0, 0, self.width, self.height)
         self.rect.center = self.screen_rect.center

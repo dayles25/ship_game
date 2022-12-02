@@ -49,7 +49,7 @@ class Ship2(pygame.sprite.Sprite):
         self.rect.midleft = self.screen_rect.midleft
 
         # Store a decimal value for the ship's vertical position.
-        self.y =  self.y = float(self.rect.y)
+        self.y = float(self.rect.y)
         self.x = 0
 
     def victory(self):

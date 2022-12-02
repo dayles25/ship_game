@@ -163,19 +163,23 @@ class ShipsAhoy:
     def _check_victory(self):
         '''check if ship has hit the right edge of the screen'''
         if self.ship.victory():
-            self.stats.game_active = False
-            pygame.mouse.set_visible(True)
+            self.ship.center_ship()
+            self.ship2.center_ship()
+         #   self.stats.game_active = False
+         #   pygame.mouse.set_visible(True)
             self.stats.level += 1
             self.sb.prep_level()
             self.sb.check_high_score()
-            self.ship2.center_ship()
+
         if self.ship2.victory():
-            self.stats.game_active = False
-            pygame.mouse.set_visible(True)
+            self.ship.center_ship()
+            self.ship2.center_ship()
+          #  self.stats.game_active = False
+          #  pygame.mouse.set_visible(True)
             self.stats.level += 1
             self.sb.prep_level()
             self.sb.check_high_score()
-            self.ship2.center_ship()
+
 
 
     def _ship_hit(self):
@@ -184,7 +188,6 @@ class ShipsAhoy:
             self.stats.ships_left -= 1
             self.sb.prep_ships()
             self.sb.prep_ships2()
-            self.cannonballs.empty()
             self.ship.center_ship()
             sleep(0.5)
         else:
@@ -195,11 +198,10 @@ class ShipsAhoy:
 
     def _ship2_hit(self):
         '''respond to ship being hit by alien'''
-        if self.stats.ships_left > 0:
+        if self.stats.ship2s_left > 0:
             self.stats.ship2s_left -= 1
             self.sb.prep_ships2()
             self.sb.prep_ships()
-            self.cannonballs.empty()
             self.ship2.center_ship()
             sleep(0.5)
         else:
