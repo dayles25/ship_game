@@ -2,14 +2,13 @@ import pygame
 import sys
 from settings import Settings
 from ship import Ship
+from stats import Stats
 import itertools
 from random import random, randint, choice
 from cannonball import Cannonball
 from island import Island
-# from bullet import Bullet
 from time import sleep
-# from game_stats import GameStats
-# from button import Button
+from button import Button
 
 class ShipsAhoy:
     '''class to manage game assets and behavior'''
@@ -23,36 +22,31 @@ class ShipsAhoy:
         self.settings.screen_width = self.screen.get_rect().width
         self.settings.screen_height = self.screen.get_rect().height
         pygame.display.set_caption("Ships Ahoy")
-        self.buffer = 40
+        self.buffer = 150
 
         self.water = pygame.image.load("images/Tiles/rpgTile029.png")
         self.TILE_SIZE = 64
 
-
-        # self.stats = GameStats(self)
-
         self.ship = Ship(self)
+        self.ships = pygame.sprite.Group()
         self.cannonballs = pygame.sprite.Group()
         self.islands = pygame.sprite.Group()
 
-
-        #self.bullets = pygame.sprite.Group()
-
-        #self._create_fleet()
-        #self.play_button = Button(self, 'Play')
-
+        self.play_button = Button(self, 'Play')
+        self.stats = Stats(self)
         self.setup_map()
 
     def run_game(self):
         '''Start the main loop for the game'''
         while True:
-            self._check_events()
-            self._check_cannonball_island_collisions()
-            #if self.stats.game_active:
-            self._create_cannonball()
-            self.ship.update()
-            self.cannonballs.update()
-            self._update_screen()
+            if self.stats.game_active:
+                self._check_events()
+                self._check_cannonball_island_collisions()
+                self._check_ship_cannonball_collisions()
+                self._create_cannonball()
+                self.ship.update(self.islands)
+                self.cannonballs.update()
+                self._update_screen()
 
 
     def _check_events(self):
@@ -91,7 +85,7 @@ class ShipsAhoy:
 
     def get_random_position(self):
         '''Makes a random position tuple (x,y)'''
-        x_loc = randint(0 + self.buffer, self.settings.screen_width - self.buffer)
+        x_loc = randint(0 + self.buffer, self.settings.screen_width - 2*self.buffer)
         y_loc = randint(0 + self.buffer, self.settings.screen_height - self.buffer)
         return (x_loc, y_loc)
 
@@ -103,15 +97,27 @@ class ShipsAhoy:
             if not pygame.sprite.spritecollideany(new_island, self.islands):
                 self.islands.add(new_island)
         if len(self.islands) < self.settings.obstacle_amount:
-            for i in range(self.settings.obstacle_amount):
+            for i in range(self.settings.obstacle_amount-len(self.islands)):
                 new_island = Island(self.get_random_position(),
                                     choice(['vertical', 'horizontal']))
                 if not pygame.sprite.spritecollideany(new_island, self.islands):
                     self.islands.add(new_island)
 
+
     def _check_cannonball_island_collisions(self):
         '''respond to bullet-alien collisions'''
         pygame.sprite.groupcollide(self.cannonballs, self.islands, True, False)
+
+    def _check_ship_cannonball_collisions(self):
+        '''check if cannonballs have hit the ship'''
+        if pygame.sprite.groupcollide(self.cannonballs, self.ships, True, True):
+            self._ship_hit()
+
+
+    def _check_victory(self):
+        for ship in self.ships:
+            if ship.rect.right == self.settings.screen_width:
+                sys.exit()
 
 
 
@@ -120,46 +126,10 @@ class ShipsAhoy:
         if self.stats.ships_left > 0:
             self.stats.ships_left -= 1
             self.cannonballs.empty()
-            self.bullets.empty()
-            self._create_fleet()
             self.ship.center_ship()
             sleep(0.5)
         else:
             self.stats.game_active = False
-
-#    def _update_aliens(self):
-#        '''update positions of aliens in fleet'''
-#        self._check_fleet_edges()
-#        self.aliens.update()
-
-#        if pygame.sprite.spritecollideany(self.ship, self.aliens):
-#            self._ship_hit()
-
-#        self._check_aliens_bottom()
-
-#    def _create_alien(self, alien_number, row_number):
-#        '''create an alien and place it in the row'''
-#        alien = Alien(self)
-#        alien_width, alien_height = alien.rect.size
-#        alien.x = alien_width + 2 * alien_width * alien_number
-#        alien.rect.x = alien.x
-#        alien.rect.y = alien_height + 2 * alien.rect.height * row_number
-#        self.aliens.add(alien)
-
-#    def _check_fleet_edges(self):
-#        '''respond if any alien has hit the edge'''
-#        for alien in self.aliens.sprites():
-#            if alien.check_edges():
-#                self._change_fleet_direction()
-#                break
-
-#    def _check_aliens_bottom(self):
-#        '''check if aliens have reached the bottom of the screen'''
-#        screen_rect = self.screen.get_rect()
-#        for alien in self.aliens.sprites():
-#            if alien.rect.bottom >= screen_rect.bottom:
-#                self._ship_hit()
-#                break
 
     def _create_cannonball(self):
         if random() < self.settings.cannonball_frequency:
@@ -167,33 +137,19 @@ class ShipsAhoy:
             self.cannonballs.add(cannonball)
             print(len(self.cannonballs))
 
+    def _create_ship(self):
+        self.ship.blitme()
+        self.ships.add(self.ship)
+
     def _update_cannonballs(self):
         """Update alien positions, and look for collisions with ship."""
         self.cannonballs.update()
 
         '''get rid of old cannonballs'''
         self.cannonballs.update()
-        for cannonball in self.cannonballs.copy():
+        for cannonball in self.cannonballs:
             if cannonball.rect.bottom <= 0:
                 self.cannonballs.remove(cannonball)
-
-        #        self._check_bullet_alien_collisions()
-
-    #  if pygame.sprite.spritecollideany(self.ship, self.aliens):
-      #      self._ship_hit()
-
-        # Look for aliens that have hit the left edge of the screen.
-      #  self._check_cannonballs_left_edge()
-
-    def _check_cannonballs_left_edge(self):
-        """Respond to aliens that have hit left edge of the screen.
-        Treat this the same as the ship getting hit.
-        """
-
-        for cannonball in self.cannonballs.sprites():
-            if cannonball.rect.left < 0:
-                self._ship_hit()
-                break
 
     def set_background(self):
         tile_height, tile_width = self.water.get_height(), self.water.get_width()
@@ -204,14 +160,10 @@ class ShipsAhoy:
         '''update images on the screen, and flip to new screen'''
         self.set_background()
         self.islands.draw(self.screen)
-        self.ship.blitme()
+        self._create_ship()
         self.cannonballs.draw(self.screen)
-        #for bullet in self.bullets.sprites():
-            #bullet.draw_bullet()
-
-       # self.aliens.draw(self.screen)
-       # if not self.stats.game_active:
-       #     self.play_button.draw_button()
+        if not self.stats.game_active:
+            self.play_button.draw_button()
         pygame.display.flip()
 
 if __name__ == '__main__':

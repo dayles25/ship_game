@@ -18,5 +18,5 @@ class Cannonball(pygame.sprite.Sprite):
         self.x = float(self.rect.x)
 
     def update(self):
-        self.x -= self.settings.alien_speed
+        self.x -= self.settings.cannonball_speed
         self.rect.x = self.x
