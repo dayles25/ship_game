@@ -1,6 +1,5 @@
 import pygame
 import math
-from wall import Wall
 
 class Ship:
     def __init__(self, s_game):
@@ -14,7 +13,7 @@ class Ship:
         self.image = pygame.transform.rotate(self.image, 90)
         self.rect = self.image.get_rect()
 
-        self.rect.center = self.screen_rect.center
+        self.rect.midleft = self.screen_rect.midleft
         self.x = float(self.rect.x)
         self.y = float(self.rect.y)
 

@@ -3,7 +3,9 @@ import sys
 from settings import Settings
 from ship import Ship
 import itertools
-import random
+from random import random, randint, choice
+from cannonball import Cannonball
+from island import Island
 # from bullet import Bullet
 from time import sleep
 # from game_stats import GameStats
@@ -21,30 +23,35 @@ class ShipsAhoy:
         self.settings.screen_width = self.screen.get_rect().width
         self.settings.screen_height = self.screen.get_rect().height
         pygame.display.set_caption("Ships Ahoy")
+        self.buffer = 40
 
         self.water = pygame.image.load("images/Tiles/rpgTile029.png")
+        self.TILE_SIZE = 64
 
-        self.rock_1 = pygame.image.load('images/Tiles/tile_65.png')
-        self.rock_2 = pygame.image.load('images/Tiles/tile_66.png')
-        self.rock_3 = pygame.image.load('images/Tiles/tile_67.png')
-    #    self.rocks = [rock_1, rock_2, rock_3]
 
         # self.stats = GameStats(self)
 
         self.ship = Ship(self)
+        self.cannonballs = pygame.sprite.Group()
+        self.islands = pygame.sprite.Group()
+
+
         #self.bullets = pygame.sprite.Group()
 
         #self._create_fleet()
         #self.play_button = Button(self, 'Play')
 
+        self.setup_map()
+
     def run_game(self):
         '''Start the main loop for the game'''
         while True:
             self._check_events()
+            self._check_cannonball_island_collisions()
             #if self.stats.game_active:
+            self._create_cannonball()
             self.ship.update()
-              #  self._update_bullets()
-              #  self._update_aliens()
+            self.cannonballs.update()
             self._update_screen()
 
 
@@ -82,39 +89,43 @@ class ShipsAhoy:
         elif event.key == pygame.K_DOWN:
             self.ship.moving_down = False
 
-    #def _fire_bullet(self):
-        '''creates new bullet and adds to group'''
-     #   if len(self.bullets) < self.settings.bullets_allowed:
-      #      new_bullet = Bullet(self)
-       #     self.bullets.add(new_bullet)
+    def get_random_position(self):
+        '''Makes a random position tuple (x,y)'''
+        x_loc = randint(0 + self.buffer, self.settings.screen_width - self.buffer)
+        y_loc = randint(0 + self.buffer, self.settings.screen_height - self.buffer)
+        return (x_loc, y_loc)
 
-#    def _update_bullets(self):
- #       '''Update position of bullets and get rid of old bullets'''
-  #      self.bullets.update()
-   #     for bullet in self.bullets.copy():
-    #        if bullet.rect.bottom <= 0:
-     #           self.bullets.remove(bullet)
+    def setup_map(self):
+        # build random islands
+        for i in range(self.settings.obstacle_amount):
+            new_island = Island(self.get_random_position(),
+                                choice(['vertical', 'horizontal']))
+            if not pygame.sprite.spritecollideany(new_island, self.islands):
+                self.islands.add(new_island)
+        if len(self.islands) < self.settings.obstacle_amount:
+            for i in range(self.settings.obstacle_amount):
+                new_island = Island(self.get_random_position(),
+                                    choice(['vertical', 'horizontal']))
+                if not pygame.sprite.spritecollideany(new_island, self.islands):
+                    self.islands.add(new_island)
 
-#        self._check_bullet_alien_collisions()
+    def _check_cannonball_island_collisions(self):
+        '''respond to bullet-alien collisions'''
+        pygame.sprite.groupcollide(self.cannonballs, self.islands, True, False)
 
-#    def _check_bullet_alien_collisions(self):
-#        '''respond to bullet-alien collisions'''
- #       collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
-  #      if not self.aliens:
-   #         self.bullets.empty()
-    #        self._create_fleet()
 
-#    def _ship_hit(self):
- #       '''respond to ship being hit by alien'''
-  #      if self.stats.ships_left > 0:
-   #         self.stats.ships_left -= 1
-    #        self.aliens.empty()
-     #       self.bullets.empty()
-      #      self._create_fleet()
-       #     self.ship.center_ship()
-        #    sleep(0.5)
-#        else:
- #           self.stats.game_active = False
+
+    def _ship_hit(self):
+        '''respond to ship being hit by alien'''
+        if self.stats.ships_left > 0:
+            self.stats.ships_left -= 1
+            self.cannonballs.empty()
+            self.bullets.empty()
+            self._create_fleet()
+            self.ship.center_ship()
+            sleep(0.5)
+        else:
+            self.stats.game_active = False
 
 #    def _update_aliens(self):
 #        '''update positions of aliens in fleet'''
@@ -150,28 +161,51 @@ class ShipsAhoy:
 #                self._ship_hit()
 #                break
 
+    def _create_cannonball(self):
+        if random() < self.settings.cannonball_frequency:
+            cannonball = Cannonball(self)
+            self.cannonballs.add(cannonball)
+            print(len(self.cannonballs))
+
+    def _update_cannonballs(self):
+        """Update alien positions, and look for collisions with ship."""
+        self.cannonballs.update()
+
+        '''get rid of old cannonballs'''
+        self.cannonballs.update()
+        for cannonball in self.cannonballs.copy():
+            if cannonball.rect.bottom <= 0:
+                self.cannonballs.remove(cannonball)
+
+        #        self._check_bullet_alien_collisions()
+
+    #  if pygame.sprite.spritecollideany(self.ship, self.aliens):
+      #      self._ship_hit()
+
+        # Look for aliens that have hit the left edge of the screen.
+      #  self._check_cannonballs_left_edge()
+
+    def _check_cannonballs_left_edge(self):
+        """Respond to aliens that have hit left edge of the screen.
+        Treat this the same as the ship getting hit.
+        """
+
+        for cannonball in self.cannonballs.sprites():
+            if cannonball.rect.left < 0:
+                self._ship_hit()
+                break
+
     def set_background(self):
         tile_height, tile_width = self.water.get_height(), self.water.get_width()
         for x, y in itertools.product(range(0, self.settings.screen_width, tile_width), range(0, self.settings.screen_height, tile_height)):
             self.screen.blit(self.water, (x, y))
 
-    def create_obstacles(self, amount):
-     #   random_x = random.randint(200, 1000)
-     #   random_y = random.randint(50, 590)
-     #   random_rock = random.choice(self.rocks)
-     #   for x in range(amount):
-        self.screen.blit(self.rock_1, (200, 300))
-        self.screen.blit(self.rock_2, (400, 100))
-        self.screen.blit(self.rock_3, (700, 150))
-        self.screen.blit(self.rock_1, (1000, 300))
-        self.screen.blit(self.rock_2, (600, 500))
-
-
     def _update_screen(self):
         '''update images on the screen, and flip to new screen'''
         self.set_background()
-        self.create_obstacles(self.settings.obstacle_amount)
+        self.islands.draw(self.screen)
         self.ship.blitme()
+        self.cannonballs.draw(self.screen)
         #for bullet in self.bullets.sprites():
             #bullet.draw_bullet()
 
