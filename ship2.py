@@ -1,7 +1,7 @@
 import pygame
 import math
 
-class Ship(pygame.sprite.Sprite):
+class Ship2(pygame.sprite.Sprite):
     def __init__(self, sa_game):
         """Initialize the rocket and set its starting position."""
         super().__init__()
@@ -10,7 +10,7 @@ class Ship(pygame.sprite.Sprite):
         self.settings = sa_game.settings
         self.screen_rect = sa_game.screen.get_rect()
 
-        self.image = pygame.image.load('images/Ships/ship (2).png').convert_alpha()
+        self.image = pygame.image.load('images/Ships/ship (20).png').convert_alpha()
         self.image = pygame.transform.scale(self.image, (33, 56))
         self.image = pygame.transform.rotate(self.image, 90)
         self.rect = self.image.get_rect()
@@ -49,7 +49,7 @@ class Ship(pygame.sprite.Sprite):
         self.rect.midleft = self.screen_rect.midleft
 
         # Store a decimal value for the ship's vertical position.
-        self.y = float(self.rect.y)
+        self.y =  self.y = float(self.rect.y)
         self.x = 0
 
     def victory(self):

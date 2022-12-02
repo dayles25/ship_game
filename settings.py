@@ -14,5 +14,6 @@ class Settings:
         self.bullet_color = (5, 250, 9)
         self.bullets_allowed = 3
         self.ship_limit = 3
+        self.ship2_limit = 3
         self.cannonball_frequency = .005
 
