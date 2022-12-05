@@ -1,4 +1,5 @@
 import pygame
+import pygame.font
 import sys
 from settings import Settings
 from ship import Ship
@@ -19,15 +20,20 @@ class ShipsAhoy:
         pygame.init()
         self.settings = Settings()
 
+        #set up screen
         self.screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
         self.settings.screen_width = self.screen.get_rect().width
         self.settings.screen_height = self.screen.get_rect().height
         pygame.display.set_caption("Ships Ahoy")
-        self.buffer = 150
 
+        #define water tile and size
         self.water = pygame.image.load("images/Tiles/rpgTile029.png")
         self.TILE_SIZE = 64
 
+        #define font for game
+        self.font = pygame.font.SysFont('Gigi', 48)
+
+        #initialize ships and add sprites to groups
         self.ship = Ship(self)
         self.ship2 = Ship2(self)
         self.ships = pygame.sprite.Group()
@@ -37,8 +43,16 @@ class ShipsAhoy:
         self.stats = Stats(self)
         self.sb = Scoreboard(self)
 
+        # load sounds
+        self.hit_sound = pygame.mixer.Sound("sounds/eep.wav")
+        self.dead_sound = pygame.mixer.Sound("sounds/scream.wav")
+        pygame.mixer.music.load("sounds/background_music.wav")
+
     def run_game(self):
         '''Start the main loop for the game'''
+        #play music
+        pygame.mixer.music.play(-1)
+        #main loop for the game
         while True:
             self._check_events()
             if self.stats.game_active:
@@ -65,6 +79,7 @@ class ShipsAhoy:
                 self._check_keyup_events(event)
 
     def _check_keydown_events(self, event):
+        #check for keydown events
         if event.key == pygame.K_RIGHT:
             self.ship.moving_right = True
         elif event.key == pygame.K_LEFT:
@@ -73,6 +88,7 @@ class ShipsAhoy:
             self.ship.moving_up = True
         elif event.key == pygame.K_DOWN:
             self.ship.moving_down = True
+        # WASD controls
         if event.key == ord('d'):
             self.ship2.moving_right = True
         elif event.key == ord('a'):
@@ -85,6 +101,7 @@ class ShipsAhoy:
             sys.exit()
 
     def _check_keyup_events(self, event):
+        #check for keyup events
         if event.key == pygame.K_RIGHT:
             self.ship.moving_right = False
         elif event.key == pygame.K_LEFT:
@@ -93,6 +110,7 @@ class ShipsAhoy:
             self.ship.moving_up = False
         elif event.key == pygame.K_DOWN:
             self.ship.moving_down = False
+        #WASD controls
         if event.key == ord('d'):
             self.ship2.moving_right = False
         elif event.key == ord('a'):
@@ -101,6 +119,53 @@ class ShipsAhoy:
             self.ship2.moving_up = False
         elif event.key == ord('s'):
             self.ship2.moving_down = False
+
+    def end_game(self):
+        '''Ends the game, displays score, and resets score'''
+        while True:
+            self.screen.fill((138, 19, 19))
+            #score message
+            img = self.font.render(f"Score: {self.stats.level}", True, (20, 20, 20))
+            img_rect = img.get_rect()
+            img_rect.midbottom = self.screen.get_rect().midbottom
+            self.screen.blit(img, img_rect)
+            #game over message
+            img_1 = self.font.render(f"GAME OVER - Press Spacebar to restart", True, (20, 20, 20))
+            img_1_rect = img_1.get_rect()
+            img_1_rect.center = self.screen.get_rect().center
+            self.screen.blit(img_1, img_1_rect)
+            #quit message
+            img_2 = self.font.render(f"QUIT GAME - Press Q", True, (20, 20, 20))
+            img_2_rect = img_2.get_rect()
+            img_2_rect.midtop = self.screen.get_rect().midtop
+            self.screen.blit(img_2, img_2_rect)
+
+            pygame.display.flip()
+            # get events to reset the game
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        sys.exit()
+                    if event.key == pygame.K_SPACE:
+
+                        self.stats.reset_stats()
+                        self.stats.game_active = True
+                        self.stats.level = 1
+                        self.sb.prep_level()
+                        self.sb.prep_ships()
+                        self.sb.prep_ships2()
+
+                        # get rid of remaining groups
+                        self.cannonballs.empty()
+
+                        # center ship and create another game
+                        self.ship.center_ship()
+                        self.ship2.center_ship()
+                    else:
+                        continue
+                    return 0
 
     def _check_play_button(self, mouse_pos):
         '''Start a new game when the play button is clicked'''
@@ -125,19 +190,20 @@ class ShipsAhoy:
 
     def _check_ship_cannonball_collisions(self):
         '''check if cannonballs have hit the ship'''
+        # if collision is sensed, execute the ship_hit function
         if pygame.sprite.spritecollide(self.ship, self.cannonballs, True):
             self._ship_hit()
         if pygame.sprite.spritecollide(self.ship2, self.cannonballs, True):
             self._ship2_hit()
 
 
+
     def _check_victory(self):
         '''check if ship has hit the right edge of the screen'''
+        # see if ship has hit the edge and update the game accordingly
         if self.ship.victory():
             self.ship.center_ship()
             self.ship2.center_ship()
-         #   self.stats.game_active = False
-         #   pygame.mouse.set_visible(True)
             self.stats.level += 1
             self.settings.increase_speed()
             self.sb.prep_level()
@@ -146,8 +212,6 @@ class ShipsAhoy:
         if self.ship2.victory():
             self.ship.center_ship()
             self.ship2.center_ship()
-          #  self.stats.game_active = False
-          #  pygame.mouse.set_visible(True)
             self.stats.level += 1
             self.settings.increase_speed()
             self.sb.prep_level()
@@ -156,40 +220,48 @@ class ShipsAhoy:
 
 
     def _ship_hit(self):
-        '''respond to ship being hit by alien'''
+        '''respond to ship being hit by cannonball'''
         if self.stats.ships_left > 0:
+            pygame.mixer.Sound.play(self.hit_sound)
             self.stats.ships_left -= 1
             self.sb.prep_ships()
             self.sb.prep_ships2()
             self.ship.center_ship()
             sleep(0.5)
         else:
+            #kill ship and end game
+            pygame.mixer.Sound.play(self.dead_sound)
             self.stats.game_active = False
-            pygame.mouse.set_visible(True)
             self.sb.prep_level()
             self.sb.prep_ships()
+            self.end_game()
 
     def _ship2_hit(self):
-        '''respond to ship being hit by alien'''
+        '''respond to ship being hit by cannonball'''
         if self.stats.ship2s_left > 0:
+            pygame.mixer.Sound.play(self.hit_sound)
             self.stats.ship2s_left -= 1
             self.sb.prep_ships2()
             self.sb.prep_ships()
             self.ship2.center_ship()
             sleep(0.5)
         else:
+            #kill ship and end game
+            pygame.mixer.Sound.play(self.dead_sound)
             self.stats.game_active = False
-            pygame.mouse.set_visible(True)
             self.sb.prep_level()
             self.sb.prep_ships2()
+            self.end_game()
 
     def _create_cannonball(self):
+        #spawn random cannonballs on the right side of the screen
         if random() < self.settings.cannonball_frequency:
             cannonball = Cannonball(self)
             self.cannonballs.add(cannonball)
             print(len(self.cannonballs))
 
     def _create_ship(self):
+        #create and add ship to ships group
         self.ship.blitme()
         self.ship2.blitme()
         self.ships.add(self.ship)
@@ -197,7 +269,7 @@ class ShipsAhoy:
 
 
     def _update_cannonballs(self):
-        """Update alien positions, and look for collisions with ship."""
+        """Update cannonball positions, and look for collisions with ship."""
         self.cannonballs.update()
 
         '''get rid of old cannonballs once they leave the screen'''
@@ -208,6 +280,7 @@ class ShipsAhoy:
 
     def set_background(self):
         '''multiply water tiles across screen to fill background'''
+        #use water tiles to create ocean background
         tile_height, tile_width = self.water.get_height(), self.water.get_width()
         for x, y in itertools.product(range(0, self.settings.screen_width, tile_width), range(0, self.settings.screen_height, tile_height)):
             self.screen.blit(self.water, (x, y))
@@ -222,6 +295,7 @@ class ShipsAhoy:
             self.play_button.draw_button()
         pygame.display.flip()
 
+#run game
 if __name__ == '__main__':
     game = ShipsAhoy()
     game.run_game()

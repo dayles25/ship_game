@@ -45,6 +45,7 @@ class Ship2(pygame.sprite.Sprite):
         self.x = 0
 
     def victory(self):
+        '''detect if a ship has reached the right side of the screen'''
         if self.rect.right == self.screen_rect.right:
             return True
 

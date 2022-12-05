@@ -3,6 +3,7 @@ from random import randint
 
 class Cannonball(pygame.sprite.Sprite):
     def __init__(self, sa_game):
+        '''initialize the cannonball class'''
         super().__init__()
         self.screen = sa_game.screen
         self.settings = sa_game.settings
@@ -18,5 +19,6 @@ class Cannonball(pygame.sprite.Sprite):
         self.x = float(self.rect.x)
 
     def update(self):
+        '''update the cannonballs location'''
         self.x -= self.settings.cannonball_speed
         self.rect.x = self.x
