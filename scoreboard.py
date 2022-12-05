@@ -26,11 +26,11 @@ class Scoreboard:
         self.prep_ships2()
 
     def prep_level(self):
-        '''turn the score into an image'''
+        '''turn the level into an image'''
         level_str = str(self.stats.level)
         self.level_image = self.font.render(level_str, True, self.text_color)
 
-        #display score top right
+        #display level top right
         self.level_rect = self.level_image.get_rect()
         self.level_rect.right = self.screen_rect.right - 20
         self.level_rect.top = 20

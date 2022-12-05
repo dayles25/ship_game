@@ -6,7 +6,6 @@ from stats import Stats
 import itertools
 from random import random, randint, choice
 from cannonball import Cannonball
-from island import Island
 from time import sleep
 from button import Button
 from scoreboard import Scoreboard
@@ -33,24 +32,21 @@ class ShipsAhoy:
         self.ship2 = Ship2(self)
         self.ships = pygame.sprite.Group()
         self.cannonballs = pygame.sprite.Group()
-        self.islands = pygame.sprite.Group()
 
         self.play_button = Button(self, 'Play')
         self.stats = Stats(self)
         self.sb = Scoreboard(self)
-        self.setup_map()
 
     def run_game(self):
         '''Start the main loop for the game'''
         while True:
             self._check_events()
             if self.stats.game_active:
-                self._check_cannonball_island_collisions()
                 self._check_ship_cannonball_collisions()
                 self._check_victory()
                 self._create_cannonball()
-                self.ship.update(self.islands)
-                self.ship2.update(self.islands)
+                self.ship.update()
+                self.ship2.update()
                 self.cannonballs.update()
             self._update_screen()
 
@@ -114,43 +110,18 @@ class ShipsAhoy:
             #reset game stats
             self.stats.reset_stats()
             self.stats.game_active = True
+            self.stats.level = 1
             self.sb.prep_level()
             self.sb.prep_ships()
             self.sb.prep_ships2()
 
             # get rid of remaining groups
-            self.islands.empty()
-            self.setup_map()
             self.cannonballs.empty()
 
             #center ship and create another game
             self.ship.center_ship()
             self.ship2.center_ship()
 
-    def get_random_position(self):
-        '''Makes a random position tuple (x,y)'''
-        x_loc = randint(0 + self.buffer, self.settings.screen_width - 2*self.buffer)
-        y_loc = randint(0 + self.buffer, self.settings.screen_height - self.buffer)
-        return (x_loc, y_loc)
-
-    def setup_map(self):
-        # build random islands
-        for i in range(self.settings.obstacle_amount):
-            new_island = Island(self.get_random_position(),
-                                choice(['vertical', 'horizontal']))
-            if not pygame.sprite.spritecollideany(new_island, self.islands):
-                self.islands.add(new_island)
-        if len(self.islands) < self.settings.obstacle_amount:
-            for i in range(self.settings.obstacle_amount-len(self.islands)):
-                new_island = Island(self.get_random_position(),
-                                    choice(['vertical', 'horizontal']))
-                if not pygame.sprite.spritecollideany(new_island, self.islands):
-                    self.islands.add(new_island)
-
-
-    def _check_cannonball_island_collisions(self):
-        '''respond to bullet-alien collisions'''
-        pygame.sprite.groupcollide(self.cannonballs, self.islands, True, False)
 
     def _check_ship_cannonball_collisions(self):
         '''check if cannonballs have hit the ship'''
@@ -168,6 +139,7 @@ class ShipsAhoy:
          #   self.stats.game_active = False
          #   pygame.mouse.set_visible(True)
             self.stats.level += 1
+            self.settings.increase_speed()
             self.sb.prep_level()
             self.sb.check_high_score()
 
@@ -177,6 +149,7 @@ class ShipsAhoy:
           #  self.stats.game_active = False
           #  pygame.mouse.set_visible(True)
             self.stats.level += 1
+            self.settings.increase_speed()
             self.sb.prep_level()
             self.sb.check_high_score()
 
@@ -227,7 +200,7 @@ class ShipsAhoy:
         """Update alien positions, and look for collisions with ship."""
         self.cannonballs.update()
 
-        '''get rid of old cannonballs'''
+        '''get rid of old cannonballs once they leave the screen'''
         self.cannonballs.update()
         for cannonball in self.cannonballs:
             if cannonball.rect.bottom <= 0:
@@ -242,7 +215,6 @@ class ShipsAhoy:
     def _update_screen(self):
         '''update images on the screen, and flip to new screen'''
         self.set_background()
-        self.islands.draw(self.screen)
         self.sb.show_score()
         self._create_ship()
         self.cannonballs.draw(self.screen)

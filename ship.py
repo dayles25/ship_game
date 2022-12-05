@@ -22,31 +22,19 @@ class Ship(pygame.sprite.Sprite):
         self.moving_right, self.moving_left = False, False
         self.moving_up, self.moving_down = False, False
 
-    def update(self, island_group):
+    def update(self):
         """Update the ship's position based on movement flags."""
-        # Update the ship's position based on movement flags.
+        if self.moving_right and self.rect.right < self.screen_rect.right:
+            self.x += self.settings.ship_speed
+        if self.moving_left and self.rect.left > 0:
+            self.x -= self.settings.ship_speed
+        if self.moving_up and self.rect.top > 0:
+            self.y -= self.settings.ship_speed
+        if self.moving_down and self.rect.bottom <= self.screen_rect.bottom:
+            self.y += self.settings.ship_speed
 
-        # define old_rect
-      #  old_rect = self.rect
-
-        # if the new position does not hit an island, set x,y to new pos
-        if not pygame.sprite.spritecollide(self, island_group, False):
-            if self.moving_right and self.rect.right < self.screen_rect.right:
-                self.x += self.settings.ship_speed
-            if self.moving_left and self.rect.left > 0:
-                self.x -= self.settings.ship_speed
-            if self.moving_up and self.rect.top > 0:
-                self.y -= self.settings.ship_speed
-            if self.moving_down and self.rect.bottom <= self.screen_rect.bottom:
-                self.y += self.settings.ship_speed
-      #  else:
-            # go back to the old rectangle
         self.rect.x = self.x
         self.rect.y = self.y
-
-
-        # Update rect object from position attributes.
-
 
 
     def center_ship(self):
