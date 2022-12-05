@@ -39,6 +39,7 @@ class ShipsAhoy:
         self.ships = pygame.sprite.Group()
         self.cannonballs = pygame.sprite.Group()
 
+        # create and intialize game attributes
         self.play_button = Button(self, 'Play')
         self.stats = Stats(self)
         self.sb = Scoreboard(self)
@@ -148,6 +149,7 @@ class ShipsAhoy:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
                         sys.exit()
+                    # respond to spacebar
                     if event.key == pygame.K_SPACE:
 
                         self.stats.reset_stats()
@@ -163,8 +165,10 @@ class ShipsAhoy:
                         # center ship and create another game
                         self.ship.center_ship()
                         self.ship2.center_ship()
+                    #disregard other keys besides q
                     else:
                         continue
+                    #kill game over screen
                     return 0
 
     def _check_play_button(self, mouse_pos):
@@ -175,7 +179,9 @@ class ShipsAhoy:
             #reset game stats
             self.stats.reset_stats()
             self.stats.game_active = True
+            # reset level
             self.stats.level = 1
+            # prep scoring mechanisms
             self.sb.prep_level()
             self.sb.prep_ships()
             self.sb.prep_ships2()
@@ -190,7 +196,7 @@ class ShipsAhoy:
 
     def _check_ship_cannonball_collisions(self):
         '''check if cannonballs have hit the ship'''
-        # if collision is sensed, execute the ship_hit function
+        # if collision is sensed, execute the repective ship_hit function
         if pygame.sprite.spritecollide(self.ship, self.cannonballs, True):
             self._ship_hit()
         if pygame.sprite.spritecollide(self.ship2, self.cannonballs, True):
@@ -202,10 +208,14 @@ class ShipsAhoy:
         '''check if ship has hit the right edge of the screen'''
         # see if ship has hit the edge and update the game accordingly
         if self.ship.victory():
+            #recenter ships
             self.ship.center_ship()
             self.ship2.center_ship()
+            #update level
             self.stats.level += 1
+            #increase difficulty
             self.settings.increase_speed()
+            # prep scoring functions
             self.sb.prep_level()
             self.sb.check_high_score()
 
@@ -240,7 +250,9 @@ class ShipsAhoy:
         '''respond to ship being hit by cannonball'''
         if self.stats.ship2s_left > 0:
             pygame.mixer.Sound.play(self.hit_sound)
+            #update health bar
             self.stats.ship2s_left -= 1
+            #prep scoring features
             self.sb.prep_ships2()
             self.sb.prep_ships()
             self.ship2.center_ship()
@@ -249,8 +261,10 @@ class ShipsAhoy:
             #kill ship and end game
             pygame.mixer.Sound.play(self.dead_sound)
             self.stats.game_active = False
+            # prep scoring features
             self.sb.prep_level()
             self.sb.prep_ships2()
+            #end game
             self.end_game()
 
     def _create_cannonball(self):
@@ -281,18 +295,21 @@ class ShipsAhoy:
     def set_background(self):
         '''multiply water tiles across screen to fill background'''
         #use water tiles to create ocean background
+        #itertools allows creator to iterate an image over a set range
         tile_height, tile_width = self.water.get_height(), self.water.get_width()
         for x, y in itertools.product(range(0, self.settings.screen_width, tile_width), range(0, self.settings.screen_height, tile_height)):
             self.screen.blit(self.water, (x, y))
 
     def _update_screen(self):
         '''update images on the screen, and flip to new screen'''
+        # input elements that must be constantly updated
         self.set_background()
         self.sb.show_score()
         self._create_ship()
         self.cannonballs.draw(self.screen)
         if not self.stats.game_active:
             self.play_button.draw_button()
+        #display the updated screen
         pygame.display.flip()
 
 #run game
